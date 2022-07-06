@@ -1,5 +1,4 @@
-"""Test
-"""
+
 import sys
 import os
 import json
@@ -19,7 +18,6 @@ from get_metrics import compute_dset_fragment_scores
 
 def main(args):
     print(args)
-    print("Taniya")
 
     global LOAD_START_TIME; LOAD_START_TIME = time()
     if args.mini:
@@ -75,6 +73,8 @@ def main(args):
         encoder = my_models.EncoderRNN(args, args.device).to(args.device)
         encoding_size = args.enc_size + 4096 if args.i3d else args.enc_size
         multiclassifier = my_models.MLP(encoding_size,args.classif_size,len(inds)).to(args.device)
+        multiclassifier_pred = my_models.MLP(encoding_size, classif_size, len()).to(args.device)
+        
         mlp_dict = {}
         class_dict = {c[1]: my_models.MLP(encoding_size + args.ind_size,args.mlp_size,1).to(args.device) for c in classes}
         relation_dict = {r[1]: my_models.MLP(encoding_size + 2*args.ind_size,args.mlp_size,1).to(args.device) for r in relations}
