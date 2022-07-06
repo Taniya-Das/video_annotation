@@ -7,7 +7,7 @@ average probability assigned to positive facts and negative facts respectively.
 import json
 import numpy as np
 from get_pred import compute_probs_for_dataset
-
+from dl_utils.misc import check_dir
 
 def compute_dset_fragment_scores(dl,encoder,multiclassifier,dataset_dict,fragment_name,ARGS):
     """Compute performance metrics for a train/val/test dataset fragment. First
@@ -25,6 +25,7 @@ def compute_dset_fragment_scores(dl,encoder,multiclassifier,dataset_dict,fragmen
         assert num_atoms == len(dataset_dict['dataset'][vid_id]['pruned_atoms_with_synsets'])
         perfects[vid_id]=dataset_dict['dataset'][vid_id]['pruned_atoms_with_synsets']
     perfects_path = f'../experiments/{ARGS.exp_name}/train_perfects.json'
+    check_dir(f'../experiments/{ARGS.exp_name}')
     open(perfects_path,'a').close()
     with open(perfects_path,'w') as f: json.dump(perfects,f)
     return classification_scores, prediction_scores, perfects

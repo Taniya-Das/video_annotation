@@ -13,8 +13,11 @@ src/*.swp
 src/most_recent_lossplot.png
 **/tags
 **/*.json
+data
 
 ### IntelliJ IDEA / PyCharm
 .idea
 *.iml
 *.iws
+
+

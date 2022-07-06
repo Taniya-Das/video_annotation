@@ -24,13 +24,13 @@ def get_pred_loss(video_ids, encodings, dataset_dict, testing, margin=1, device=
             if arity == 1:
                 # Unary predicate
                 predname,subname = tfatom
-                context_embedding = torch.cat([encoding, ind_dict[subname]])
+                context_embedding = torch.cat([encoding, ind_dict[subname[1]]])
             elif arity == 2:
                 # Binary predicate
                 predname,subname,objname = tfatom
-                context_embedding = torch.cat([encoding, ind_dict[subname],ind_dict[objname]])
+                context_embedding = torch.cat([encoding, ind_dict[subname[1]],ind_dict[objname[1]]])
             else: set_trace()
-            mlp = pred_mlps['classes' if arity==1 else 'relations'][predname]
+            mlp = pred_mlps['classes' if arity==1 else 'relations'][predname[1]]
             prediction = mlp(context_embedding)
             if testing:
                 if truth_value: pos_predictions.append(prediction.item())
@@ -46,6 +46,7 @@ def compute_probs_for_dataset(dl,encoder,multiclassifier,dataset_dict,use_i3d):
     for d in dl:
         video_tensor = d[0].float().transpose(0,1).to('cuda')
         multiclass_inds = d[1].to('cuda')
+        #print(multiclass_inds)
         video_ids = d[2].to('cuda')
         i3d = d[3].float().to('cuda')
         encoding, enc_hidden = encoder(video_tensor)

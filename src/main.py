@@ -50,12 +50,14 @@ def main(args):
     with open(json_path) as f: json_data=json.load(f)
 
     inds,classes,relations,json_data_list = json_data['inds'],json_data['classes'],json_data['relations'],json_data['dataset']
+   
     for dp in json_data_list:
         dp['pruned_atoms_with_synsets'] = [tuplify(a) for a in dp['pruned_atoms_with_synsets']]
         dp['lcwa'] = [tuplify(a) for a in dp['lcwa']]
     json_data_dict = {dp['video_id']:dp for dp in json_data_list}
     video_data_dir = os.path.join(args.data_dir,args.dataset)
     train_dl, val_dl, test_dl = data_loader.get_split_dls(json_data_list,splits,args.batch_size,args.shuffle,args.i3d,video_data_dir=video_data_dir)
+    print(next(iter(train_dl))[1].shape, next(iter(val_dl))[1].shape, next(iter(test_dl))[1].shape,)
 
     if args.reload:
         reload_file_path = args.reload
@@ -73,10 +75,10 @@ def main(args):
         encoding_size = args.enc_size + 4096 if args.i3d else args.enc_size
         multiclassifier = my_models.MLP(encoding_size,args.classif_size,len(inds)).to(args.device)
         mlp_dict = {}
-        class_dict = {tuple(c): my_models.MLP(encoding_size + args.ind_size,args.mlp_size,1).to(args.device) for c in classes}
-        relation_dict = {tuple(r): my_models.MLP(encoding_size + 2*args.ind_size,args.mlp_size,1).to(args.device) for r in relations}
+        class_dict = {c[1]: my_models.MLP(encoding_size + args.ind_size,args.mlp_size,1).to(args.device) for c in classes}
+        relation_dict = {r[1]: my_models.MLP(encoding_size + 2*args.ind_size,args.mlp_size,1).to(args.device) for r in relations}
         mlp_dict = {'classes':class_dict, 'relations':relation_dict}
-        ind_dict = {tuple(ind): torch.nn.Parameter(torch.tensor(get_w2v_vec(ind[0],w2v),device=args.device,dtype=torch.float32)) for ind in inds}
+        ind_dict = {ind[1]: torch.nn.Parameter(torch.tensor(get_w2v_vec(ind[0],w2v),device=args.device,dtype=torch.float32)) for ind in inds}
 
         #encoder_params = filter(lambda enc: enc.requires_grad, encoder.parameters())
         params_list = [encoder.parameters(), multiclassifier.parameters()] + [ind for ind in ind_dict.values()] + [mlp.parameters() for mlp in mlp_dict['classes'].values()] + [mlp.parameters() for mlp in mlp_dict['relations'].values()]
@@ -101,10 +103,12 @@ def main(args):
     encoder.batch_size=1
     train_dl, val_dl, test_dl = data_loader.get_split_dls(json_data['dataset'],splits,batch_size=1,shuffle=False,i3d=args.i3d,video_data_dir=video_data_dir)
     val_classification_scores, val_prediction_scores, val_perfects = compute_dset_fragment_scores(val_dl,encoder,multiclassifier,dataset_dict,'val',args)
+
     train_classification_scores, train_prediction_scores, train_perfects = compute_dset_fragment_scores(train_dl,encoder,multiclassifier,dataset_dict,'train',args)
     #fixed_thresh = ((train_output_info['thresh']*1200)+(val_output_info['thresh']*100))/1300
+    
     test_classification_scores, test_prediction_scores, test_perfects = compute_dset_fragment_scores(test_dl,encoder,multiclassifier,dataset_dict,'test',args)
-
+    
     summary_filename = os.path.join(exp_dir,'{}_summary.txt'.format(exp_name, exp_name))
     with open(summary_filename, 'w') as summary_file:
         summary_file.write('Experiment name: {}\n'.format(exp_name))
