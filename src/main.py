@@ -19,6 +19,7 @@ from get_metrics import compute_dset_fragment_scores
 
 def main(args):
     print(args)
+    print("Taniya")
 
     global LOAD_START_TIME; LOAD_START_TIME = time()
     if args.mini:
