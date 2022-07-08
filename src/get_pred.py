@@ -47,25 +47,32 @@ def get_pred_loss(video_ids, encodings, dataset_dict, testing, margin=1, device=
 def convert_atoms_to_ids_only(atoms_list):
     return [tuple([item[1] for item in atom]) for atom in atoms_list]
 
-def inference(video_ids, encodings, ind_multiclassifications, dataset_dict):
+def inference(video_ids, encodings, ind_multiclassifications, class_multiclassifications, rel_multiclassifications, dataset_dict):
     json_data_dict = dataset_dict['dataset']
     ind_dict = dataset_dict['ind_dict']
     pred_mlps  = dataset_dict['mlp_dict']
     annotations_by_id = {}
-    for video_id, encoding, vid_ind_c in zip(video_ids,encodings,ind_multiclassifications):
+    for video_id, encoding, vid_ind_c, vid_class_c, vid_rel_c in zip(video_ids,encodings,ind_multiclassifications, class_multiclassifications, rel_multiclassifications):
         print('evaluating', video_id.item())
         annotation = []
-        inds_to_use = [list(ind_dict.items())[i] for i,c in enumerate(vid_ind_c) if c>0.5]
+        inds_to_use = [list(ind_dict.items())[i] for i,c in enumerate(vid_ind_c) if c>0]
+        #print('\n',inds_to_use)
+        class_to_use = [list(pred_mlps['classes'].items())[i] for i,c in enumerate(vid_class_c) if c>0]
+        #print('\n',pred_mlps['classes'])
+        rel_to_use = [list(pred_mlps['relations'].items())[i] for i,c in enumerate(vid_rel_c) if c>0]
+        #print('\n',rel_to_use)
+        #breakpoint()
         for subj_id, subj_vector in inds_to_use:
-            for class_id, class_mlp in pred_mlps['classes'].items():
+            print(subj_id)
+            for class_id, class_mlp in class_to_use:
                 context_embedding = torch.cat([encoding, subj_vector])
-                if class_mlp(context_embedding) > 0.5:
+                if class_mlp(context_embedding) > 0:
                     annotation.append((class_id,subj_id))
             for obj_id, obj_vector in inds_to_use:
                 if obj_id==subj_id: continue # Assume no reflexive predicates
-                for rel_id, rel_mlp in pred_mlps['relations'].items():
+                for rel_id, rel_mlp in rel_to_use:
                     context_embedding = torch.cat([encoding, subj_vector, obj_vector])
-                    if rel_mlp(context_embedding) > 0.5:
+                    if rel_mlp(context_embedding) > 0:
                         annotation.append((class_id,subj_id,obj_id))
 
         # Compare to GT and compute scores
@@ -91,7 +98,7 @@ def inference(video_ids, encodings, ind_multiclassifications, dataset_dict):
     return annotations_by_id
 
 
-def compute_probs_for_dataset(dl,encoder,multiclassifier,dataset_dict,use_i3d):
+def compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,use_i3d):
     pos_classifications, neg_classifications, pos_classifications_class, neg_classifications_class, pos_classifications_rel, neg_classifications_rel, pos_predictions, neg_predictions, perfects = [],[],[],[],[],[],[],[],{}
     all_accs = []
     all_f1s = []
@@ -105,11 +112,11 @@ def compute_probs_for_dataset(dl,encoder,multiclassifier,dataset_dict,use_i3d):
 
         video_ids = d[4].to('cuda')
         i3d = d[5].float().to('cuda')
-        encoding, enc_hidden = encoder(video_tensor)
-        if use_i3d: encoding = torch.cat([encoding,i3d],dim=-1)
-        multiclassif = multiclassifier(encoding)
-        multiclassif_class = multiclassifier_class(encoding)
-        multiclassif_rel = multiclassifier_rel(encoding)
+        encodings, enc_hidden = encoder(video_tensor)
+        if use_i3d: encoding = torch.cat([encodings,i3d],dim=-1)
+        multiclassif = multiclassifier(encodings)
+        multiclassif_class = multiclassifier_class(encodings)
+        multiclassif_rel = multiclassifier_rel(encodings)
         
         #assert (multiclass_inds==1).sum() + (multiclass_inds==0).sum() == multiclass_inds.shape[1]
         assert unique_labels(multiclass_inds).issubset(set([0,1]))
@@ -124,9 +131,11 @@ def compute_probs_for_dataset(dl,encoder,multiclassifier,dataset_dict,use_i3d):
         new_pos_classifications_class,new_neg_classifications_class = multiclassif_class[multiclass_class], multiclassif_class[~multiclass_class]
         new_pos_classifications_rel,new_neg_classifications_rel = multiclassif_rel[multiclass_rel], multiclassif_rel[~multiclass_rel]
         
+        #To evaluate predicate MLPs by comparing with GT individuals. 
         new_pos_predictions, new_neg_predictions = get_pred_loss(video_ids, encodings, dataset_dict, testing=True)
         
-        annotations_by_id = inference(video_ids, encodings, multiclassif, dataset_dict)
+        annotations_by_id = inference(video_ids, encodings, multiclassif, multiclassif_class, multiclassif_rel, dataset_dict)
+
         all_accs += [vid['acc'] for vid in annotations_by_id.values()]
         all_f1s += [vid['f1'] for vid in annotations_by_id.values()]
   
@@ -147,6 +156,7 @@ def compute_probs_for_dataset(dl,encoder,multiclassifier,dataset_dict,use_i3d):
 
     total_acc = np.array([x for x in all_accs if x!=-1]).mean()
     total_f1 = np.array([x for x in all_f1s if x!=-1]).mean()
+
    
     return pos_classifications, neg_classifications, pos_classifications_class, neg_classifications_class, pos_classifications_rel, neg_classifications_rel, pos_predictions, neg_predictions, perfects, total_acc, total_f1
 

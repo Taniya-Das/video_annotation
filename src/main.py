@@ -116,44 +116,43 @@ def main(args):
     encoder.batch_size=1
     train_dl, val_dl, test_dl = data_loader.get_split_dls(json_data['dataset'],splits,batch_size=1,shuffle=False,i3d=args.i3d,video_data_dir=video_data_dir)
 
-    val_classification_scores, val_prediction_scores, val_classification_class_scores, val_prediction_class_scores, val_classification_rel_scores, val_prediction_rel_scores, val_perfects, val_acc, val_f1 = compute_dset_fragment_scores(val_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'val',args)
+    val_classification_scores, val_prediction_scores, val_classification_class_scores,  val_classification_rel_scores, val_perfects, val_acc, val_f1 = compute_dset_fragment_scores(val_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'val',args)
 
-    train_classification_scores, train_prediction_scores, train_classification_class_scores, train_prediction_class_scores, train_classification_rel_scores, train_prediction_rel_scores, train_perfects, train_acc, train_f1 = compute_dset_fragment_scores(train_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'train',args)
+    train_classification_scores, train_prediction_scores, train_classification_class_scores, train_classification_rel_scores, train_perfects, train_acc, train_f1 = compute_dset_fragment_scores(train_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'train',args)
     #fixed_thresh = ((train_output_info['thresh']*1200)+(val_output_info['thresh']*100))/1300
     
-    test_classification_scores, test_prediction_scores, test_classification_class_scores, test_prediction_class_scores, test_classification_rel_scores, test_prediction_rel_scores, test_perfects, test_acc, test_f1 = compute_dset_fragment_scores(test_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'test',args)
+    test_classification_scores, test_prediction_scores, test_classification_class_scores, test_classification_rel_scores, test_perfects, test_acc, test_f1 = compute_dset_fragment_scores(test_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'test',args)
 
     summary_filename = os.path.join(exp_dir,'{}_summary.txt'.format(exp_name, exp_name))
     with open(summary_filename, 'w') as summary_file:
         summary_file.write('Experiment name: {}\n'.format(exp_name))
-        summary_file.write('\n')
+        summary_file.write('\n\n')
         summary_file.write('Multiclass Individual\n')
         summary_file.write('\tTrain\tVal\tTest\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_classification_scores[k])+'\t'+str(val_classification_scores[k])+'\t'+str(test_classification_scores[k])+'\n')
-        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
-            summary_file.write(k+'\t'+str(train_prediction_scores[k])+'\t'+str(val_prediction_scores[k])+'\t'+str(test_prediction_scores[k])+'\n')
-
         
-        summary_file.write('\n')
+        summary_file.write('\n\n')
         summary_file.write('Multiclass Classes\n')
         summary_file.write('\tTrain\tVal\tTest\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_classification_class_scores[k])+'\t'+str(val_classification_class_scores[k])+'\t'+str(test_classification_class_scores[k])+'\n')
-        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
-            summary_file.write(k+'\t'+str(train_prediction_class_scores[k])+'\t'+str(val_prediction_class_scores[k])+'\t'+str(test_prediction_class_scores[k])+'\n')
         
-        summary_file.write('\n')
+    
+        summary_file.write('\n\n')
         summary_file.write('Multiclass Relations\n')
         summary_file.write('\tTrain\tVal\tTest\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_classification_rel_scores[k])+'\t'+str(val_classification_rel_scores[k])+'\t'+str(test_classification_rel_scores[k])+'\n')
-        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
-            summary_file.write(k+'\t'+str(train_prediction_rel_scores[k])+'\t'+str(val_prediction_rel_scores[k])+'\t'+str(test_prediction_rel_scores[k])+'\n')
 
+        summary_file.write('\n\n')
+        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
+            summary_file.write(k+'\t'+str(train_prediction_scores[k])+'\t'+str(val_prediction_scores[k])+'\t'+str(test_prediction_scores[k])+'\n')
+
+        summary_file.write('\n\n')
         summary_file.write(f'train acc: {train_acc}\n')
         summary_file.write(f'val acc: {val_acc}\n')
-        summary_file.write(f'test acc: {test_acc}')
+        summary_file.write(f'test acc: {test_acc}\n')
         summary_file.write(f'train f1: {train_f1}\n')
         summary_file.write(f'val f1: {val_f1}\n')
         summary_file.write(f'test f1: {test_f1}')
