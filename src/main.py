@@ -146,6 +146,7 @@ def main(args):
             summary_file.write(k+'\t'+str(train_classification_rel_scores[k])+'\t'+str(val_classification_rel_scores[k])+'\t'+str(test_classification_rel_scores[k])+'\n')
 
         summary_file.write('\n\n')
+        summary_file.write('Prediction Scores (Using GT)\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_prediction_scores[k])+'\t'+str(val_prediction_scores[k])+'\t'+str(test_prediction_scores[k])+'\n')
 
