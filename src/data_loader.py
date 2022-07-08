@@ -45,10 +45,12 @@ class LookupDataset(data.Dataset):
         dp = self.dataset[index]
         video_id = dp['video_id']
         multiclass_inds = torch.tensor(dp['multiclass_inds'])
+        multiclass_class = torch.tensor(dp['multiclass_class'])
+        multiclass_rel = torch.tensor(dp['multiclass_rel'])
         vgg = self.vgg_lookup_table[video_id]
         try: i3d = torch.tensor([]) if self.i3d_lookup_table == None else self.i3d_lookup_table[video_id]
         except: set_trace()
-        return vgg, multiclass_inds, video_id, i3d
+        return vgg, multiclass_inds, multiclass_class, multiclass_rel, video_id, i3d
 
     def __len__(self):
         return len(self.dataset)
@@ -103,6 +105,8 @@ if __name__ == "__main__":
     for i, data in enumerate(dl):
         vid = data[0]
         multiclass_inds = data[2]
+        multiclass_class = data[3]
+        multiclass_rel = data[4]
         print(vid.shape)
         import pdb; pdb.set_trace()  # XXX BREAKPOINT
         print(multiclass_inds)

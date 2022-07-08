@@ -11,17 +11,30 @@ from dl_utils.misc import check_dir
 from utils import acc_f1_from_binary_confusion_mat
 
 
-def compute_dset_fragment_scores(dl,encoder,multiclassifier,dataset_dict,fragment_name,ARGS):
+def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,fragment_name,ARGS):
     """Compute performance metrics for a train/val/test dataset fragment. First
     executes forward pass of network to get outputs corresponding to true and
     false individuals and predicates; then thresholds and computes metrics.
     """
 
-    pos_classifs,neg_classifs,pos_preds,neg_preds,perfects,acc,f1 = compute_probs_for_dataset(dl,encoder,multiclassifier,dataset_dict,ARGS.i3d)
+    pos_classifs,neg_classifs,pos_classifs_class,neg_classifs_class,pos_classifs_rel,neg_classifs_rel,pos_preds,neg_preds,perfects,acc,f1 = compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,ARGS.i3d)
+    
     classif_scores = find_best_thresh_from_probs(pos_classifs,neg_classifs)
+    classif_class = find_best_thresh_from_probs(pos_classifs_class,neg_classifs_class)
+    classif_scores_rel = find_best_thresh_from_probs(pos_classifs_rel,neg_classifs_rel)
+
     pred_scores = find_best_thresh_from_probs(pos_preds,neg_classifs)
+    pred_scores_class = find_best_thresh_from_probs(pos_preds,neg_classifs_class)
+    pred_scores_rel = find_best_thresh_from_probs(pos_preds,neg_classifs_rel)
+
     classif_scores['dset_fragment'] = fragment_name
     pred_scores['dset_fragment'] = fragment_name
+    classif_scores_class['dset_fragment'] = fragment_name
+    pred_scores_class['dset_fragment'] = fragment_name
+    classif_scores_rel['dset_fragment'] = fragment_name
+    pred_scores_rel['dset_fragment'] = fragment_name
+
+
     for vid_id,num_atoms in perfects.items():
         if num_atoms < 2: continue
         assert num_atoms == len(dataset_dict['dataset'][vid_id]['pruned_atoms_with_synsets'])
@@ -30,7 +43,9 @@ def compute_dset_fragment_scores(dl,encoder,multiclassifier,dataset_dict,fragmen
     check_dir(f'../experiments/{ARGS.exp_name}')
     open(perfects_path,'a').close()
     with open(perfects_path,'w') as f: json.dump(perfects,f)
-    return classif_scores, pred_scores, perfects, acc, f1
+
+    return classif_scores, pred_scores, classif_scores_class, pred_scores_class, classif_scores_rel, pred_scores_rel, perfects, acc, f1
+
 
 def compute_scores_for_thresh(positive_probs, negative_probs, thresh):
     tp = len([p for p in positive_probs if p>thresh])

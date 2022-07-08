@@ -92,32 +92,61 @@ def inference(video_ids, encodings, ind_multiclassifications, dataset_dict):
 
 
 def compute_probs_for_dataset(dl,encoder,multiclassifier,dataset_dict,use_i3d):
-    pos_classifications, neg_classifications, pos_predictions, neg_predictions, perfects = [],[],[],[],{}
+    pos_classifications, neg_classifications, pos_classifications_class, neg_classifications_class, pos_classifications_rel, neg_classifications_rel, pos_predictions, neg_predictions, perfects = [],[],[],[],[],[],[],[],{}
     all_accs = []
     all_f1s = []
+
     for d in dl:
         video_tensor = d[0].float().transpose(0,1).to('cuda')
         multiclass_inds = d[1].to('cuda')
+        multiclass_class = d[2].to('cuda')
+        multiclass_rel = d[3].to('cuda')
         #print(multiclass_inds)
-        video_ids = d[2].to('cuda')
-        i3d = d[3].float().to('cuda')
-        encodings, enc_hidden = encoder(video_tensor)
-        if use_i3d: encodings = torch.cat([encodings,i3d],dim=-1)
-        multiclassif = multiclassifier(encodings)
+
+        video_ids = d[4].to('cuda')
+        i3d = d[5].float().to('cuda')
+        encoding, enc_hidden = encoder(video_tensor)
+        if use_i3d: encoding = torch.cat([encoding,i3d],dim=-1)
+        multiclassif = multiclassifier(encoding)
+        multiclassif_class = multiclassifier_class(encoding)
+        multiclassif_rel = multiclassifier_rel(encoding)
+        
         #assert (multiclass_inds==1).sum() + (multiclass_inds==0).sum() == multiclass_inds.shape[1]
         assert unique_labels(multiclass_inds).issubset(set([0,1]))
+        assert unique_labels(multiclass_class).issubset(set([0,1]))
+        assert unique_labels(multiclass_rel).issubset(set([0,1]))
+
         multiclass_inds = multiclass_inds.type(torch.bool)
+        multiclass_class = multiclass_class.type(torch.bool)
+        multiclass_rel = multiclass_rel.type(torch.bool)
+
         new_pos_classifications,new_neg_classifications = multiclassif[multiclass_inds], multiclassif[~multiclass_inds]
+        new_pos_classifications_class,new_neg_classifications_class = multiclassif_class[multiclass_class], multiclassif_class[~multiclass_class]
+        new_pos_classifications_rel,new_neg_classifications_rel = multiclassif_rel[multiclass_rel], multiclassif_rel[~multiclass_rel]
+        
         new_pos_predictions, new_neg_predictions = get_pred_loss(video_ids, encodings, dataset_dict, testing=True)
+        
         annotations_by_id = inference(video_ids, encodings, multiclassif, dataset_dict)
         all_accs += [vid['acc'] for vid in annotations_by_id.values()]
         all_f1s += [vid['f1'] for vid in annotations_by_id.values()]
+  
         if (new_pos_classifications>0).all() and (new_neg_classifications<0).all() and all([p>0 for p in new_pos_predictions]) and all([p<0 for p in new_neg_predictions]): perfects[int(video_ids[0].item())] = len(new_pos_predictions)
         #if all([p>0 for p in new_pos_predictions]) and all([p<0 for p in new_neg_predictions]): perfects[video_ids[0].item()] = len(new_pos_predictions)
+        
         pos_predictions += new_pos_predictions
         neg_predictions += new_neg_predictions
+
         pos_classifications += new_pos_classifications.tolist()
         neg_classifications += new_neg_classifications.tolist()
+        
+        pos_classifications_class += new_pos_classifications_class.tolist()
+        neg_classifications_class += new_neg_classifications_class.tolist()
+
+        pos_classifications_rel += new_pos_classifications_rel.tolist()
+        neg_classifications_rel += new_neg_classifications_rel.tolist()
+
     total_acc = np.array([x for x in all_accs if x!=-1]).mean()
     total_f1 = np.array([x for x in all_f1s if x!=-1]).mean()
-    return pos_classifications, neg_classifications, pos_predictions, neg_predictions, perfects, total_acc, total_f1
+   
+    return pos_classifications, neg_classifications, pos_classifications_class, neg_classifications_class, pos_classifications_rel, neg_classifications_rel, pos_predictions, neg_predictions, perfects, total_acc, total_f1
+
