@@ -8,6 +8,8 @@ import json
 import numpy as np
 from get_pred import compute_probs_for_dataset
 from dl_utils.misc import check_dir
+from utils import acc_f1_from_binary_confusion_mat
+
 
 def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,fragment_name,ARGS):
     """Compute performance metrics for a train/val/test dataset fragment. First
@@ -15,22 +17,23 @@ def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_clas
     false individuals and predicates; then thresholds and computes metrics.
     """
 
-    pos_classifications,neg_classifications,pos_classifications_class,neg_classifications_class,pos_classifications_rel,neg_classifications_rel,pos_predictions,neg_predictions,perfects = compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,ARGS.i3d)
+    pos_classifs,neg_classifs,pos_classifs_class,neg_classifs_class,pos_classifs_rel,neg_classifs_rel,pos_preds,neg_preds,perfects,acc,f1 = compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,ARGS.i3d)
     
-    classification_scores = find_best_thresh_from_probs(pos_classifications,neg_classifications)
-    classification_scores_class = find_best_thresh_from_probs(pos_classifications_class,neg_classifications_class)
-    classification_scores_rel = find_best_thresh_from_probs(pos_classifications_rel,neg_classifications_rel)
+    classif_scores = find_best_thresh_from_probs(pos_classifs,neg_classifs)
+    classif_class = find_best_thresh_from_probs(pos_classifs_class,neg_classifs_class)
+    classif_scores_rel = find_best_thresh_from_probs(pos_classifs_rel,neg_classifs_rel)
 
-    prediction_scores = find_best_thresh_from_probs(pos_predictions,neg_classifications)
-    prediction_scores_class = find_best_thresh_from_probs(pos_predictions,neg_classifications_class)
-    prediction_scores_rel = find_best_thresh_from_probs(pos_predictions,neg_classifications_rel)
+    pred_scores = find_best_thresh_from_probs(pos_preds,neg_classifs)
+    pred_scores_class = find_best_thresh_from_probs(pos_preds,neg_classifs_class)
+    pred_scores_rel = find_best_thresh_from_probs(pos_preds,neg_classifs_rel)
 
-    classification_scores['dset_fragment'] = fragment_name
-    prediction_scores['dset_fragment'] = fragment_name
-    classification_scores_class['dset_fragment'] = fragment_name
-    prediction_scores_class['dset_fragment'] = fragment_name
-    classification_scores_rel['dset_fragment'] = fragment_name
-    prediction_scores_rel['dset_fragment'] = fragment_name
+    classif_scores['dset_fragment'] = fragment_name
+    pred_scores['dset_fragment'] = fragment_name
+    classif_scores_class['dset_fragment'] = fragment_name
+    pred_scores_class['dset_fragment'] = fragment_name
+    classif_scores_rel['dset_fragment'] = fragment_name
+    pred_scores_rel['dset_fragment'] = fragment_name
+
 
     for vid_id,num_atoms in perfects.items():
         if num_atoms < 2: continue
@@ -40,7 +43,9 @@ def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_clas
     check_dir(f'../experiments/{ARGS.exp_name}')
     open(perfects_path,'a').close()
     with open(perfects_path,'w') as f: json.dump(perfects,f)
-    return classification_scores, prediction_scores, classification_scores_class, prediction_scores_class, classification_scores_rel, prediction_scores_rel, perfects
+
+    return classif_scores, pred_scores, classif_scores_class, pred_scores_class, classif_scores_rel, pred_scores_rel, perfects, acc, f1
+
 
 def compute_scores_for_thresh(positive_probs, negative_probs, thresh):
     tp = len([p for p in positive_probs if p>thresh])
@@ -48,13 +53,9 @@ def compute_scores_for_thresh(positive_probs, negative_probs, thresh):
     fn = len([p for p in positive_probs if p<thresh])
     tn = len([p for p in negative_probs if p<thresh])
 
-    prec = tp/(tp+fp+1e-4)
-    rec = tp/(tp+fn+1e-4)
-    f1 = 2/((1/(prec+1e-4))+(1/(rec+1e-4)))
-    acc = (tp+tn)/(tp+fp+fn+tn)
+    acc, f1 = acc_f1_from_binary_confusion_mat(tp,fp,tn,fn)
 
     return tp, fp, fn, tn, f1, acc
-
 
 def find_best_thresh_from_probs(positive_probs, negative_probs):
     """Compute accuracy and f1 by thresholding probabilities for positive and
