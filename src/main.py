@@ -64,6 +64,10 @@ def main(args):
         saved_model = torch.load(reload_file_path)
         encoder = saved_model['encoder']
         multiclassifier = saved_model['multiclassifier']
+
+        multiclassifier_class = saved_model['multiclassifier_class']
+        multiclassifier_rel = saved_model['multiclassifier_rel']
+
         ind_dict = saved_model['ind_dict']
         mlp_dict = saved_model['mlp_dict']
         encoder.batch_size = args.batch_size
@@ -73,7 +77,8 @@ def main(args):
         encoder = my_models.EncoderRNN(args, args.device).to(args.device)
         encoding_size = args.enc_size + 4096 if args.i3d else args.enc_size
         multiclassifier = my_models.MLP(encoding_size,args.classif_size,len(inds)).to(args.device)
-        multiclassifier_pred = my_models.MLP(encoding_size, classif_size, len()).to(args.device)
+        multiclassifier_class = my_models.MLP(encoding_size, args.classif_size, len(classes)).to(args.device)
+        multiclassifier_rel = my_models.MLP(encoding_size, args.classif_size, len(relations)).to(args.device)
         
         mlp_dict = {}
         class_dict = {c[1]: my_models.MLP(encoding_size + args.ind_size,args.mlp_size,1).to(args.device) for c in classes}
@@ -82,13 +87,14 @@ def main(args):
         ind_dict = {ind[1]: torch.nn.Parameter(torch.tensor(get_w2v_vec(ind[0],w2v),device=args.device,dtype=torch.float32)) for ind in inds}
 
         #encoder_params = filter(lambda enc: enc.requires_grad, encoder.parameters())
-        params_list = [encoder.parameters(), multiclassifier.parameters()] + [ind for ind in ind_dict.values()] + [mlp.parameters() for mlp in mlp_dict['classes'].values()] + [mlp.parameters() for mlp in mlp_dict['relations'].values()]
+        #params_list = [encoder.parameters(), multiclassifier.parameters()] + [ind for ind in ind_dict.values()] + [mlp.parameters() for mlp in mlp_dict['classes'].values()] + [mlp.parameters() for mlp in mlp_dict['relations'].values()]
+        params_list = [encoder.parameters(), multiclassifier.parameters(), multiclassifier_class.parameters(), multiclassifier_rel.parameters()] + [ind for ind in ind_dict.values()] + [mlp.parameters() for mlp in mlp_dict['classes'].values()] + [mlp.parameters() for mlp in mlp_dict['relations'].values()]
         optimizer = optim.Adam([{'params': params, 'lr':args.learning_rate, 'wd':args.weight_decay} for params in params_list])
 
     dataset_dict = {'dataset':json_data_dict,'ind_dict':ind_dict,'mlp_dict':mlp_dict}
     global TRAIN_START_TIME; TRAIN_START_TIME = time()
     print('\nTraining the model')
-    train.train(args, encoder, multiclassifier, dataset_dict, train_dl=train_dl, val_dl=val_dl, optimizer=optimizer, exp_name=exp_name, device=args.device, train=True)
+    train.train(args, encoder, multiclassifier, multiclassifier_class, multiclassifier_rel, dataset_dict, train_dl=train_dl, val_dl=val_dl, optimizer=optimizer, exp_name=exp_name, device=args.device, train=True)
 
     global EVAL_START_TIME; EVAL_START_TIME = time()
     if args.no_chkpt: print("\nUsing final (likely overfit) version of network for outputs because no checkpoints were saved")
@@ -97,27 +103,48 @@ def main(args):
         checkpoint = torch.load(checkpoint_path)
         encoder = checkpoint['encoder']
         multiclassifier = checkpoint['multiclassifier']
+        multiclassifier_class = checkpoint['multiclassifier_class']
+        multiclassifier_rel = checkpoint['multiclassifier_rel']
         dataset_dict['ind_dict'] = checkpoint['ind_dict']
         dataset_dict['mlp_dict'] = checkpoint['mlp_dict']
         print("Reloading best network version for outputs")
 
     encoder.batch_size=1
     train_dl, val_dl, test_dl = data_loader.get_split_dls(json_data['dataset'],splits,batch_size=1,shuffle=False,i3d=args.i3d,video_data_dir=video_data_dir)
-    val_classification_scores, val_prediction_scores, val_perfects = compute_dset_fragment_scores(val_dl,encoder,multiclassifier,dataset_dict,'val',args)
+    val_classification_scores, val_prediction_scores, val_classification_class_scores, val_prediction_class_scores, val_classification_rel_scores, val_prediction_rel_scores, val_perfects = compute_dset_fragment_scores(val_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'val',args)
 
-    train_classification_scores, train_prediction_scores, train_perfects = compute_dset_fragment_scores(train_dl,encoder,multiclassifier,dataset_dict,'train',args)
+    train_classification_scores, train_prediction_scores, train_classification_class_scores, train_prediction_class_scores, train_classification_rel_scores, train_prediction_rel_scores, train_perfects = compute_dset_fragment_scores(train_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'train',args)
     #fixed_thresh = ((train_output_info['thresh']*1200)+(val_output_info['thresh']*100))/1300
     
-    test_classification_scores, test_prediction_scores, test_perfects = compute_dset_fragment_scores(test_dl,encoder,multiclassifier,dataset_dict,'test',args)
+    test_classification_scores, test_prediction_scores, test_classification_class_scores, test_prediction_class_scores, test_classification_rel_scores, test_prediction_rel_scores, test_perfects = compute_dset_fragment_scores(test_dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,'test',args)
     
     summary_filename = os.path.join(exp_dir,'{}_summary.txt'.format(exp_name, exp_name))
     with open(summary_filename, 'w') as summary_file:
         summary_file.write('Experiment name: {}\n'.format(exp_name))
+        summary_file.write('\n')
+        summary_file.write('Multiclass Individual\n')
         summary_file.write('\tTrain\tVal\tTest\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_classification_scores[k])+'\t'+str(val_classification_scores[k])+'\t'+str(test_classification_scores[k])+'\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_prediction_scores[k])+'\t'+str(val_prediction_scores[k])+'\t'+str(test_prediction_scores[k])+'\n')
+        
+        summary_file.write('\n')
+        summary_file.write('Multiclass Classes\n')
+        summary_file.write('\tTrain\tVal\tTest\n')
+        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
+            summary_file.write(k+'\t'+str(train_classification_class_scores[k])+'\t'+str(val_classification_class_scores[k])+'\t'+str(test_classification_class_scores[k])+'\n')
+        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
+            summary_file.write(k+'\t'+str(train_prediction_class_scores[k])+'\t'+str(val_prediction_class_scores[k])+'\t'+str(test_prediction_class_scores[k])+'\n')
+        
+        summary_file.write('\n')
+        summary_file.write('Multiclass Relations\n')
+        summary_file.write('\tTrain\tVal\tTest\n')
+        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
+            summary_file.write(k+'\t'+str(train_classification_rel_scores[k])+'\t'+str(val_classification_rel_scores[k])+'\t'+str(test_classification_rel_scores[k])+'\n')
+        for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
+            summary_file.write(k+'\t'+str(train_prediction_rel_scores[k])+'\t'+str(val_prediction_rel_scores[k])+'\t'+str(test_prediction_rel_scores[k])+'\n')
+        
         summary_file.write('\nParameters:\n')
         for key in options.IMPORTANT_PARAMS:
             summary_file.write(str(key) + ": " + str(vars(args)[key]) + "\n")

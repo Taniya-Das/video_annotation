@@ -95,15 +95,37 @@ class DatasetMaker():
                 multihot_inds = np.logical_or.reduce(ohes).astype(int).tolist()
             dp['multiclass_inds'] = list(multihot_inds)
 
+        for dp in d:
+            atoms = dp['atoms_with_synsets']
             all_classes_in_vid = [tuple(a[0]) for a in atoms if len(a)==2]
             classes_in_vid = set([i for i in all_classes_in_vid
                                     if i[1] in self.unique_classes_by_id])
             dp['classes'] = list(classes_in_vid)
 
+            if len(classes_in_vid) == 0:
+                multihot_classes = np.zeros(self.n_unique_classes).tolist()
+            else:
+                x = list(self.unique_classes_by_id.keys())
+                ohes = [np.arange(self.n_unique_classes) == x.index(cl[1]) for cl in classes_in_vid]
+                multihot_classes = np.logical_or.reduce(ohes).astype(int).tolist()
+            dp['multiclass_class'] = list(multihot_classes)
+
+        for dp in d:
+            atoms = dp['atoms_with_synsets']
             all_relations_in_vid = [tuple(a[0]) for a in atoms if len(a)==3]
             relations_in_vid = set([i for i in all_relations_in_vid
                                     if i[1] in self.unique_relations_by_id])
             dp['relations'] = list(relations_in_vid)
+
+            if len(relations_in_vid) == 0:
+                multihot_relations = np.zeros(self.n_unique_relations).tolist()
+            else:
+                x = list(self.unique_relations_by_id.keys())
+                ohes = [np.arange(self.n_unique_relations) == x.index(rl[1]) for rl in relations_in_vid]
+                multihot_relations = np.logical_or.reduce(ohes).astype(int).tolist()
+            dp['multiclass_rel'] = list(multihot_relations)
+
+        
             dp['pruned_atoms_with_synsets'] = self.prune_atoms(atoms)
             dp['lcwa'] = self.compute_lcwa(dp['pruned_atoms_with_synsets'])
             #print(len(inds_in_vid),len(classes_in_vid),len(relations_in_vid),len(dp['lcwa']))
