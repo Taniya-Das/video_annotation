@@ -1,5 +1,5 @@
-"""Test
-"""
+from dl_utils.misc import check_dir
+from collections import OrderedDict
 import sys
 import os
 import json
@@ -25,12 +25,14 @@ def main(args):
     if args.mini:
         args.exp_name = 'try'
     exp_name = get_datetime_stamp() if args.exp_name == "" else args.exp_name
-    exp_dir = os.path.join(args.data_dir,exp_name)
-    if not os.path.isdir(exp_dir): os.makedirs(exp_dir)
-    elif args.exp_name == 'try' or args.exp_name.startswith('jade') or args.overwrite: pass
-    elif not get_user_yesno_answer('An experiment with name {} has already been run, do you want to overwrite?'.format(exp_name)):
-        print('Please rerun command with a different experiment name')
-        sys.exit()
+    #exp_dir = os.path.join(args.data_dir,exp_name)
+    exp_dir = os.path.join('../experiments/',exp_name)
+    check_dir(exp_dir)
+    #if not os.path.isdir(exp_dir): os.makedirs(exp_dir)
+    #elif args.exp_name == 'try' or args.exp_name.startswith('jade') or args.overwrite: pass
+    #elif not get_user_yesno_answer('An experiment with name {} has already been run, do you want to overwrite?'.format(exp_name)):
+        #print('Please rerun command with a different experiment name')
+        #sys.exit()
 
     w2v_path = os.path.join(args.data_dir,'w2v_vecs.bin')
     if args.mini:
@@ -78,8 +80,9 @@ def main(args):
         mlp_dict = {}
         class_dict = {c[1]: my_models.MLP(encoding_size + args.ind_size,args.mlp_size,1).to(args.device) for c in classes}
         relation_dict = {r[1]: my_models.MLP(encoding_size + 2*args.ind_size,args.mlp_size,1).to(args.device) for r in relations}
-        mlp_dict = {'classes':class_dict, 'relations':relation_dict}
-        ind_dict = {ind[1]: torch.nn.Parameter(torch.tensor(get_w2v_vec(ind[0],w2v),device=args.device,dtype=torch.float32)) for ind in inds}
+        # order the dicts so can lookup by index at inference
+        mlp_dict = OrderedDict({'classes':class_dict, 'relations':relation_dict})
+        ind_dict = OrderedDict({ind[1]: torch.nn.Parameter(torch.tensor(get_w2v_vec(ind[0],w2v),device=args.device,dtype=torch.float32)) for ind in inds})
 
         #encoder_params = filter(lambda enc: enc.requires_grad, encoder.parameters())
         params_list = [encoder.parameters(), multiclassifier.parameters()] + [ind for ind in ind_dict.values()] + [mlp.parameters() for mlp in mlp_dict['classes'].values()] + [mlp.parameters() for mlp in mlp_dict['relations'].values()]
@@ -103,13 +106,11 @@ def main(args):
 
     encoder.batch_size=1
     train_dl, val_dl, test_dl = data_loader.get_split_dls(json_data['dataset'],splits,batch_size=1,shuffle=False,i3d=args.i3d,video_data_dir=video_data_dir)
-    val_classification_scores, val_prediction_scores, val_perfects = compute_dset_fragment_scores(val_dl,encoder,multiclassifier,dataset_dict,'val',args)
-
-    train_classification_scores, train_prediction_scores, train_perfects = compute_dset_fragment_scores(train_dl,encoder,multiclassifier,dataset_dict,'train',args)
+    val_classification_scores, val_prediction_scores, val_perfects, val_acc, val_f1 = compute_dset_fragment_scores(val_dl,encoder,multiclassifier,dataset_dict,'val',args)
+    train_classification_scores, train_prediction_scores, train_perfects, train_acc, train_f1 = compute_dset_fragment_scores(train_dl,encoder,multiclassifier,dataset_dict,'train',args)
     #fixed_thresh = ((train_output_info['thresh']*1200)+(val_output_info['thresh']*100))/1300
-    
-    test_classification_scores, test_prediction_scores, test_perfects = compute_dset_fragment_scores(test_dl,encoder,multiclassifier,dataset_dict,'test',args)
-    
+    test_classification_scores, test_prediction_scores, test_perfects, test_acc, test_f1  = compute_dset_fragment_scores(test_dl,encoder,multiclassifier,dataset_dict,'test',args)
+
     summary_filename = os.path.join(exp_dir,'{}_summary.txt'.format(exp_name, exp_name))
     with open(summary_filename, 'w') as summary_file:
         summary_file.write('Experiment name: {}\n'.format(exp_name))
@@ -118,6 +119,13 @@ def main(args):
             summary_file.write(k+'\t'+str(train_classification_scores[k])+'\t'+str(val_classification_scores[k])+'\t'+str(test_classification_scores[k])+'\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_prediction_scores[k])+'\t'+str(val_prediction_scores[k])+'\t'+str(test_prediction_scores[k])+'\n')
+
+        summary_file.write(f'train acc: {train_acc}\n')
+        summary_file.write(f'val acc: {val_acc}\n')
+        summary_file.write(f'test acc: {test_acc}')
+        summary_file.write(f'train f1: {train_f1}\n')
+        summary_file.write(f'val f1: {val_f1}\n')
+        summary_file.write(f'test f1: {test_f1}')
         summary_file.write('\nParameters:\n')
         for key in options.IMPORTANT_PARAMS:
             summary_file.write(str(key) + ": " + str(vars(args)[key]) + "\n")
