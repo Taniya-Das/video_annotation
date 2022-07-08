@@ -146,10 +146,12 @@ def main(args):
             summary_file.write(k+'\t'+str(train_classification_rel_scores[k])+'\t'+str(val_classification_rel_scores[k])+'\t'+str(test_classification_rel_scores[k])+'\n')
 
         summary_file.write('\n\n')
+        summary_file.write('Prediction Scores (Using GT)\n')
         for k in ['dset_fragment', 'tp', 'fn', 'fp', 'tn', 'f1', 'thresh', 'best_acc', 'acchalf', 'f1half', 'avg_pos_prob', 'avg_neg_prob']:
             summary_file.write(k+'\t'+str(train_prediction_scores[k])+'\t'+str(val_prediction_scores[k])+'\t'+str(test_prediction_scores[k])+'\n')
 
         summary_file.write('\n\n')
+        summary_file.write('Final Scoresn\n')
         summary_file.write(f'train acc: {train_acc}\n')
         summary_file.write(f'val acc: {val_acc}\n')
         summary_file.write(f'test acc: {test_acc}\n')
@@ -157,7 +159,7 @@ def main(args):
         summary_file.write(f'val f1: {val_f1}\n')
         summary_file.write(f'test f1: {test_f1}')
         
-        summary_file.write('\nParameters:\n')
+        summary_file.write('\n\nParameters:\n')
         for key in options.IMPORTANT_PARAMS:
             summary_file.write(str(key) + ": " + str(vars(args)[key]) + "\n")
     print(f'Load Time: {asMinutes(TRAIN_START_TIME-LOAD_START_TIME)}\nTrain Time: {asMinutes(EVAL_START_TIME-TRAIN_START_TIME)}\nEval Time: {asMinutes(time() - EVAL_START_TIME)}\nTotal Time: {asMinutes(time()-LOAD_START_TIME)}')
