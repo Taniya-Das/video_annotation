@@ -159,7 +159,7 @@ def main(args):
         summary_file.write(f'val f1: {val_f1}\n')
         summary_file.write(f'test f1: {test_f1}')
         
-        summary_file.write('\nParameters:\n')
+        summary_file.write('\n\nParameters:\n')
         for key in options.IMPORTANT_PARAMS:
             summary_file.write(str(key) + ": " + str(vars(args)[key]) + "\n")
     print(f'Load Time: {asMinutes(TRAIN_START_TIME-LOAD_START_TIME)}\nTrain Time: {asMinutes(EVAL_START_TIME-TRAIN_START_TIME)}\nEval Time: {asMinutes(time() - EVAL_START_TIME)}\nTotal Time: {asMinutes(time()-LOAD_START_TIME)}')
