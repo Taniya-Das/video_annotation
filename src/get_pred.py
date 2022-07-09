@@ -63,7 +63,7 @@ def inference(video_ids, encodings, ind_multiclassifications, class_multiclassif
         #print('\n',rel_to_use)
         #breakpoint()
         for subj_id, subj_vector in inds_to_use:
-            print(subj_id)
+            #print(subj_id)
             for class_id, class_mlp in class_to_use:
                 context_embedding = torch.cat([encoding, subj_vector])
                 if class_mlp(context_embedding) > 0:
@@ -90,6 +90,7 @@ def inference(video_ids, encodings, ind_multiclassifications, class_multiclassif
             fn = len([a for a in atoms if a not in annotation])
             tn = len([a for a in lcwa if a not in annotation])
             acc,f1 = acc_f1_from_binary_confusion_mat(tp,fp,tn,fn)
+            print("\ntp: {} ,fp: {} ,tn: {}, fn: {}\n".format(tp,fp,tn,fn))
 
         annotations_by_id[video_id] = {'annotation': annotation,
                                        'acc': acc,
@@ -156,7 +157,7 @@ def compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,m
 
     total_acc = np.array([x for x in all_accs if x!=-1]).mean()
     total_f1 = np.array([x for x in all_f1s if x!=-1]).mean()
-
+    
    
     return pos_classifications, neg_classifications, pos_classifications_class, neg_classifications_class, pos_classifications_rel, neg_classifications_rel, pos_predictions, neg_predictions, perfects, total_acc, total_f1
 

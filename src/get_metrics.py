@@ -1,6 +1,6 @@
 """Compute scores for results from a specified experiment. Metrics computed are
 tp,fp,fn,tn,f1,accuracy. Each are computed twice, once using a fixed threshold
-of 0.5 and once using the best available threshold. Also computed are the
+of 0.5 (0.0 without sigmoid) and once using the best available threshold. Also computed are the
 average probability assigned to positive facts and negative facts respectively.
 """
 
@@ -17,6 +17,7 @@ def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_clas
     false individuals and predicates; then thresholds and computes metrics.
     """
 
+    print("dset_fragment: ",fragment_name)
     pos_classifs, neg_classifs, pos_classifs_class, neg_classifs_class, pos_classifs_rel, neg_classifs_rel, pos_preds, neg_preds, perfects, acc, f1 = compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,ARGS.i3d)
     
     classif_scores = find_best_thresh_from_probs(pos_classifs,neg_classifs)
