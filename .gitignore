@@ -14,6 +14,7 @@ src/most_recent_lossplot.png
 **/tags
 **/*.json
 data
+experiments
 
 ### IntelliJ IDEA / PyCharm
 .idea
