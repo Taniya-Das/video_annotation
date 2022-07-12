@@ -79,7 +79,7 @@ def inference(video_ids, encodings, ind_multiclassifications, class_multiclassif
                 for rel_id, rel_mlp in rel_to_use:
                     context_embedding = torch.cat([encoding, subj_vector, obj_vector])
                     if rel_mlp(context_embedding) > 0:
-                        annotation.append((class_id,subj_id,obj_id))
+                        annotation.append((rel_id,subj_id,obj_id))
                     #elif (class_id,subj_id,obj_id) in atoms:
                         #annotation.append((class_id,subj_id,obj_id))
 
@@ -123,7 +123,7 @@ def compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,m
         video_ids = d[4].to('cuda')
         i3d = d[5].float().to('cuda')
         encodings, enc_hidden = encoder(video_tensor)
-        if use_i3d: encoding = torch.cat([encodings,i3d],dim=-1)
+        if use_i3d: encodings = torch.cat([encodings,i3d],dim=-1)
         multiclassif = multiclassifier(encodings)
         multiclassif_class = multiclassifier_class(encodings)
         multiclassif_rel = multiclassifier_rel(encodings)
