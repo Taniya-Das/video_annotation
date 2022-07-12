@@ -66,7 +66,7 @@ def inference(video_ids, encodings, ind_multiclassifications, dataset_dict):
                 for rel_id, rel_mlp in pred_mlps['relations'].items():
                     context_embedding = torch.cat([encoding, subj_vector, obj_vector])
                     if rel_mlp(context_embedding) > 0.5:
-                        annotation.append((class_id,subj_id,obj_id))
+                        annotation.append((rel_id,subj_id,obj_id))
 
         # Compare to GT and compute scores
         dpoint = json_data_dict[video_id.item()]
