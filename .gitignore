@@ -1,5 +1,32 @@
 __pycache__
 loss.png
+data
+experiments
+i3d_weights
+src/test.png
+src/scatterplot.png
+src/sub_count_r.pickle
+src/sub_count_c.pickle
+src/relationships_stats.json
+src/relationship_dict.pickle
+src/MSVD_top.png
+src/MSVD_linked_parsed_captions.json
+src/MSVD_final.json
+src/MSVD_diffEpoch.png
+src/MSVD_10dp.json
+src/MSRVTT_top.png
+src/MSRVTT_linked_parsed_captions.json
+src/MSRVTT_parsed_captions.json
+src/MSRVTT_final.json
+src/MSRVTT_diffEpoch.png
+src/MSRVTT_captions.json
+src/MSRVTT_10dp.json
+src/MSR Video Description Corpus.csv
+src/json_data_list.json
+src/class_order.json
+src/..srcile.json
+src/YouTubeClips
+src/get_top_classifier_range/*
 data/YT_40_structured_captions.json
 data/loss_plots/*
 data/frames/*
@@ -13,8 +40,8 @@ src/*.swp
 src/most_recent_lossplot.png
 **/tags
 **/*.json
-data
-experiments
+
+
 
 ### IntelliJ IDEA / PyCharm
 .idea
