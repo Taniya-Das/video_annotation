@@ -6,9 +6,16 @@ import cv2
 import numpy as np
 import json
 import math
+import os
+import pandas as pd
+from pdb import set_trace
 
 
-with open('videodatainfo_2017.json') as f:msrvtt = json.load(f)
+#captions_by_id = pd.read_csv('MSR Video Description Corpus.csv')
+
+true_ids = [item[5:] for item in os.listdir('TrainValVideo')] # Last 5 chars are the id
+frames_dir = '../data/MSRVTT/frames'
+if not os.path.isdir(frames_dir): os.makedirs(frames_dir)
 
 def reshape_video_tensor(ar):
     framed_ar = ar[range(ar.shape[0])[::math.ceil(ar.shape[0]/8)],:,:,:] # Use only 8 evenly spaced frames
@@ -19,6 +26,28 @@ def reshape_video_tensor(ar):
     assert framed_ar.shape[0] == 8
     return framed_ar
 
+
+captions_by_int_id = {}
+for int_id, filename in enumerate(os.listdir('TrainValVideo')):
+    v = cv2.VideoCapture(os.path.join('TrainValVideo',filename))
+    frame_list = []
+    num_frames = 0
+    while True:
+        frame_exists, frame = v.read()
+        if not frame_exists:
+            break
+        frame_list.append(frame)
+        num_frames += 1
+    video_tensor = np.stack(frame_list)
+    print(int_id,num_frames)
+    resized_video_tensor = reshape_video_tensor(video_tensor)
+    np.save(os.path.join(frames_dir,f'vid{int_id}_resized'),resized_video_tensor)
+    true_id = filename[:11]
+    #captions_for_this_video = captions_by_id.loc[captions_by_id['VideoID']==true_id]['Description'].tolist()
+    #captions_by_int_id[f'video{int_id}'] = captions_for_this_video
+
+
+with open('videodatainfo_2017.json') as f:msrvtt = json.load(f)
 captions_by_video_id = {}
 
 for caption_dict in msrvtt['sentences']:
@@ -30,3 +59,5 @@ for caption_dict in msrvtt['sentences']:
 
 
 with open('MSRVTT_captions.json', 'w') as f: json.dump(captions_by_video_id,f)
+
+

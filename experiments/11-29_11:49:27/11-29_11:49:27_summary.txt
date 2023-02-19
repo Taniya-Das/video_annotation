@@ -1,0 +1,28 @@
+Final Scores for Test set
+
+
+With Visual Genome: True
+train threshold: 0.45,  train_threshold_VG: 0.2
+
+LR weights [pred-MLP, KB]: [[5.98176157 0.54696756]]
+test acc: 0.8102385751367183
+test f1: 0.2900991041112668
+test positive accuracy: 0.28070291643937817
+test negative accuracy: 0.9168679491064646
+test time: 9m 21s
+
+
+Parameters:
+batch_size: 100
+bottleneck: False
+cuda_visible_devices: 0
+dataset: MSVD
+enc_size: 2000
+exp_name: 
+i3d: True
+ind_size: 300
+learning_rate: 0.001
+ontology: wordnet
+patience: 7
+reload: None
+seed: 0

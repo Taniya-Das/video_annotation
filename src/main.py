@@ -34,6 +34,7 @@ def main(args):
         #sys.exit()
 
     w2v_path = os.path.join(args.data_dir,'w2v_vecs.bin')
+    breakpoint()
     if args.mini:
         splits = [4,6,11]
         json_path = f"{args.dataset}_10dp.json"

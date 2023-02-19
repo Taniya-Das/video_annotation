@@ -41,6 +41,8 @@ def load_arguments():
     argparser.add_argument("--verbose", action="store_true", help="print network info before training")
     argparser.add_argument("--weight_decay", type=float, default=0.0)
     argparser.add_argument("--w2v_limit", type=int, default=10000000)
+    argparser.add_argument("--test", action="store_true", default=False, help="Only evaluate test dataset")
+    argparser.add_argument("--VG", action="store_true", default=False)
 
     args = argparser.parse_args()
     return args

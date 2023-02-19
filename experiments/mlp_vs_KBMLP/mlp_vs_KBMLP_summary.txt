@@ -1,0 +1,31 @@
+Final Scores for Test set
+
+
+With KB                         Without KB
+train threshold: 0.2          0.5
+
+Epoch: 0
+LR weights [pred-MLP, KB]: [[-0.12675221  0.3954032 ]]
+test acc: 0.7696025707779524, 	0.7786904567926742
+test f1: 0.2642343245802299, 	0.16831025770122168
+test time: 8m 7s
+Epoch: 1
+LR weights [pred-MLP, KB]: [[-0.14364199  0.40118529]]
+test acc: 0.7747809592153111, 	0.7786904567926742
+test f1: 0.2594472883728107, 	0.16831025770122168
+test time: 7m 49s
+Epoch: 2
+LR weights [pred-MLP, KB]: [[-0.07841381  0.47697227]]
+test acc: 0.7434741882539011, 	0.7786904567926742
+test f1: 0.2760131931418282, 	0.16831025770122168
+test time: 9m 1s
+Epoch: 5
+LR weights [pred-MLP, KB]: [[-0.15728757  0.37610173]]
+test acc: 0.7781147923212298, 	0.7786904567926742
+test f1: 0.2553350761593681, 	0.16831025770122168
+test time: 8m 33s
+Epoch: 7
+LR weights [pred-MLP, KB]: [[-0.12909385  0.45175198]]
+test acc: 0.7713057836365695, 	0.7786904567926742
+test f1: 0.26231515529868493, 	0.16831025770122168
+test time: 9m 2s

@@ -1,0 +1,29 @@
+import torch
+import numpy as np
+import time
+import utils
+from utils import acc_f1_from_binary_confusion_mat
+import torch.nn.functional as F
+from pdb import set_trace
+from dl_utils.label_funcs import unique_labels
+from statistics import mean
+import sys
+from dl_utils.misc import show_gpu_memory
+from dl_utils.tensor_funcs import numpyify
+
+
+def check_classifier(video_id, muliclassif, multiclassif_class, multiclassif_rel):
+    beakpoint()
+    multiclassif = (F.Softmax(multiclassif)).sort(descending = True)[0]
+    multiclassif_class = (F.Softmax(multiclassif_class)).sort(descending = True)[0]
+    multiclassif_rel = (F.Softmax(multiclassif_rel)).sort(descending = True)[0]
+    
+
+
+    
+
+
+
+
+
+

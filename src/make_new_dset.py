@@ -34,9 +34,25 @@ class DatasetMaker():
         self.unique_relations_by_id = {k:v for k,v in unique_relations_by_id_.items()
                                     if v not in self.ignore_preds and relation_counts[k]>50}
 
+        ind_not_ignore = []
+        for k,v in unique_inds_by_id_.items():
+            if ind_counts[k]<=50:
+                ind_not_ignore.append(v)
+        print("class\n")
+        cl_not_ignore = []
+        for k,v in unique_classes_by_id_.items():
+            if class_counts[k]<=50:
+                cl_not_ignore.append(v)
+        print("Relations\n")
+        rl_not_ignore = []
+        for k,v in unique_relations_by_id_.items():
+            if relation_counts[k]<=50:
+                rl_not_ignore.append(v)
+
         self.n_unique_inds = len(self.unique_inds_by_id)
         self.n_unique_classes = len(self.unique_classes_by_id)
         self.n_unique_relations = len(self.unique_relations_by_id)
+        breakpoint()
 
     def corrupt_atom_pred(self,atom):
         other_options_by_id = self.unique_classes_by_id if len(atom) == 2 else self.unique_relations_by_id
@@ -138,10 +154,10 @@ class DatasetMaker():
                    'relations':[(v,k) for k,v in self.unique_relations_by_id.items()],
                    'dataset':d}
 
-        with open(f'{dset_name}_final.json','w') as f: json.dump(final_d,f)
+       #with open(f'{dset_name}_final.json','w') as f: json.dump(final_d,f)
         short_d = final_d
         short_d['dataset'] = [dp for dp in d if dp['video_id'] <= 10]
-        with open(f'{dset_name}_10dp.json','w') as f: json.dump(short_d,f)
+        #with open(f'{dset_name}_10dp.json','w') as f: json.dump(short_d,f)
 
 
 if __name__ == "__main__":

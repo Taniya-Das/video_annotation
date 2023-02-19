@@ -23,7 +23,7 @@ def vgg_vec_from_video_array(video_array):
     vggvec_np = vggvec.cpu().detach().numpy()
     return vggvec_np
 
-
+"""
 # VGG vecs for MSVD videos
 for video_number in range(1970):
     framepath = f'../data/MSVD/frames/vid{video_number}_resized.npy'
@@ -33,10 +33,10 @@ for video_number in range(1970):
     print('saving vggvec to',vggpath)
     np.save(vggpath, vggvec_np)
     break
-
+"""
 
 # VGG vecs for MSRVTT videos
-for video_number in range(1,10001):
+for video_number in range(0,10000):
     framepath = f'../data/MSRVTT/frames/vid{video_number}_resized.npy'
     video_array = np.load(framepath)
     vggvec_np = vgg_vec_from_video_array(video_array)

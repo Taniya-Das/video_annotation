@@ -6,18 +6,22 @@ average probability assigned to positive facts and negative facts respectively.
 
 import json
 import numpy as np
-from get_pred import compute_probs_for_dataset
+#from get_pred import compute_probs_for_dataset
+#from get_pred_varThresh import compute_probs_for_dataset
+#from Use_KB_stats import compute_probs_for_dataset
+from get_pred_trainThresh import compute_probs_for_dataset
+#from get_pred_only1atom import compute_probs_for_dataset
 from dl_utils.misc import check_dir
 from utils import acc_f1_from_binary_confusion_mat
 
 
-def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,fragment_name,ARGS):
+def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,fragment_name,ARGS,threshold):
     """Compute performance metrics for a train/val/test dataset fragment. First
     executes forward pass of network to get outputs corresponding to true and
     false individuals and predicates; then thresholds and computes metrics.
     """
-
-    pos_classifs, neg_classifs, pos_classifs_class, neg_classifs_class, pos_classifs_rel, neg_classifs_rel, pos_preds, neg_preds, perfects, acc, f1 = compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,ARGS.i3d)
+    
+    pos_classifs, neg_classifs, pos_classifs_class, neg_classifs_class, pos_classifs_rel, neg_classifs_rel, pos_preds, neg_preds, perfects, acc, f1, threshold, pos_acc, neg_acc = compute_probs_for_dataset(dl,encoder,multiclassifier,multiclassifier_class,multiclassifier_rel,dataset_dict,ARGS.i3d,fragment_name,threshold)
     
     classif_scores = find_best_thresh_from_probs(pos_classifs,neg_classifs)
     classif_scores_class = find_best_thresh_from_probs(pos_classifs_class,neg_classifs_class)
@@ -41,7 +45,7 @@ def compute_dset_fragment_scores(dl,encoder,multiclassifier,multiclassifier_clas
     open(perfects_path,'a').close()
     with open(perfects_path,'w') as f: json.dump(perfects,f)
 
-    return classif_scores, pred_scores, classif_scores_class, classif_scores_rel, perfects, acc, f1
+    return classif_scores, pred_scores, classif_scores_class, classif_scores_rel, perfects, acc, f1, threshold, pos_acc, neg_acc
 
 
 def compute_scores_for_thresh(positive_probs, negative_probs, thresh):

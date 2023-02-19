@@ -1,0 +1,84 @@
+Experiment name: 07-15_13:43:28
+
+
+Multiclass Individual
+	Test
+dset_fragment	test
+tp	3849
+fn	3748
+fp	8945
+tn	174408
+f1	0.3776259843192381
+thresh	-1.8201277441891544
+best_acc	0.9335271013354282
+acchalf	0.96267609321812
+f1half	0.2924503600918104
+avg_pos_prob	-1.8201277441891544
+avg_neg_prob	-4.832070300314547
+
+
+Multiclass Classes
+	Test
+dset_fragment	test
+tp	2370
+fn	2345
+fp	7911
+tn	73804
+f1	0.3161980575643715
+thresh	-2.1565359297484528
+best_acc	0.8813374985537429
+acchalf	0.9463843572833507
+f1half	0.21069894338483608
+avg_pos_prob	-2.1565359297484528
+avg_neg_prob	-4.4428010097805695
+
+
+Multiclass Relations
+	Test
+dset_fragment	test
+tp	2066
+fn	1832
+fp	9166
+tn	87436
+f1	0.2732232880697265
+thresh	-2.3922660603062424
+best_acc	0.8905671641791045
+acchalf	0.9614726368159204
+f1half	0.23309316604648211
+avg_pos_prob	-2.3922660603062424
+avg_neg_prob	-5.2879515848408145
+
+
+Prediction Scores (Using GT)
+dset_fragment	test
+tp	17561
+fn	3099
+fp	7443
+tn	13217
+f1	0.7692407052637731
+thresh	-0.38279175115584296
+best_acc	0.7448693126815101
+acchalf	0.769917715392062
+f1half	0.7600304893530018
+avg_pos_prob	1.496752191019492
+avg_neg_prob	-2.732221678875012
+
+
+Final Scores
+test acc: 0.83337985795017
+test f1: 0.029415761799673014
+
+Parameters:
+batch_size: 100
+bottleneck: False
+cuda_visible_devices: 0
+dataset: MSVD
+enc_size: 2000
+exp_name: 
+i3d: True
+ind_size: 300
+learning_rate: 0.001
+ontology: wordnet
+patience: 7
+reload: None
+seed: 0

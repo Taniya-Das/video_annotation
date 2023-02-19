@@ -36,8 +36,9 @@ def get_i3d_feature_vec(i3d_net,inp):
 
 
 if __name__ == "__main__":
+    """
     dset_dir = '../data/MSVD'
-    for vid_num in range(1,1971):
+    for vid_num in range(0,1970):
         fpath = os.path.join(dset_dir,'frames',f'vid{vid_num}_resized.npy')
         x = torch.tensor(np.load(fpath)).float().cuda()
         try:
@@ -46,6 +47,7 @@ if __name__ == "__main__":
         i3dpath = os.path.join(dset_dir,'i3dvecs',f'vid{vid_num}.npy')
         np.save(i3dpath,feature_vec)
         print(vid_num,feature_vec.shape)
+    """
 
     dset_dir = '../data/MSRVTT'
     for vid_num in range(10000):
